@@ -2,6 +2,8 @@ import { Router } from "express";
 import MailingService from "../services/MailingService.js";
 import __dirname from '../utils.js';
 import config from '../config/config.js';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 
@@ -20,6 +22,22 @@ router.post('/', async (req, res) => { // Ruta para manejar el formulario de con
 
     //console.log("Llego el body al BACK:", newContact);
 
+    // Leer el archivo CV y convertir a base64
+    let cvAttachment = null;
+    try {
+        const cvPath = path.join(__dirname, 'public', 'CV_Eugenio_Brave.pdf');
+        const cvBuffer = fs.readFileSync(cvPath);
+        cvAttachment = {
+            filename: 'CV_Eugenio_Brave.pdf',
+            content: cvBuffer.toString('base64'),
+            type: 'application/pdf',
+            disposition: 'attachment'
+        };
+    } catch (error) {
+        console.error('Error al leer el archivo CV:', error);
+        // Continuar sin adjunto si hay error
+    }
+
     // Correo para el reclutador o quien se quiera contactar mediante el formulario.
     const mailToRecruiter = {
         from: config.mailing.from, // Usar configuración centralizada
@@ -35,12 +53,7 @@ router.post('/', async (req, res) => { // Ruta para manejar el formulario de con
             <p>Email: ${config.mailing.developerEmail} o eugenio_m_brave@hotmail.com</p>
         </div>
         `,
-        attachments: [
-            {
-                filename: 'CV_Eugenio_Brave.pdf',
-                path: `${__dirname}/public/CV_Eugenio_Brave.pdf`, // Ruta absoluta
-            }
-        ]
+        ...(cvAttachment && { attachments: [cvAttachment] })
     };
 
     // Configurar el correo para mi mismo, el desarrollador, con los detalles del contacto, etc.
