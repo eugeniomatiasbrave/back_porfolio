@@ -5,6 +5,8 @@ import config from '../config/config.js';
 
 export default class MailingService { // Exportar la clase MailingService
 	constructor() {
+		console.log('API Key configurada:', config.mailing.sendgridApiKey ? `${config.mailing.sendgridApiKey.substring(0, 6)}...` : 'NO CONFIGURADA');
+		console.log('API Key starts with SG:', config.mailing.sendgridApiKey?.startsWith('SG.'));
 		sgMail.setApiKey(config.mailing.sendgridApiKey);
 	}
 

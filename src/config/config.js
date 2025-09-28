@@ -9,7 +9,7 @@ export default {
         FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173'
     },
     mailing: {
-        sendgridApiKey: process.env.PORFOLIO_API_KEY || 'PORFOLIO_API_KEY_no_definida',
+        sendgridApiKey: process.env.PORFOLIO_API_KEY || process.env.SENDGRID_API_KEY || 'PORFOLIO_API_KEY_no_definida',
         from: process.env.MAIL_FROM || 'Portafolio <eugeniomatiasbrave@gmail.com>',
         developerEmail: process.env.DEVELOPER_EMAIL || 'eugeniomatiasbrave@gmail.com',
     },
