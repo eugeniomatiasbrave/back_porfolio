@@ -7,9 +7,9 @@ import cors from 'cors';
 const app = express();
 app.use(cors(
     { 
-    origin: 'https://frontporfolio.vercel.app/'
+    origin: config.app.FRONTEND_URL
  }
-)); // Cambia el puerto según el frontend
+)); // Configuración centralizada de CORS
 
 app.use(express.json()); // Middleware para parsear el cuerpo de las peticiones JSON
 

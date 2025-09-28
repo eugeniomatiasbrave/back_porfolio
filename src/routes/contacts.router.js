@@ -1,6 +1,7 @@
 import { Router } from "express";
 import MailingService from "../services/MailingService.js";
 import __dirname from '../utils.js';
+import config from '../config/config.js';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post('/', async (req, res) => { // Ruta para manejar el formulario de con
 
     // Correo para el reclutador o quien se quiera contactar mediante el formulario.
     const mailToRecruiter = {
-        from: "Porfolio Contact Form",
+        from: config.mailing.from, // Usar configuración centralizada
         to: [email],
         subject: "Porfolio Eugenio M. Brave y CV",
         html: `
@@ -31,22 +32,22 @@ router.post('/', async (req, res) => { // Ruta para manejar el formulario de con
             <p>Adjunto encontrarás mi CV en PDF.</p>
             <p>Espero que podamos contactarnos pronto.</p>
             <p>Saludos, Eugenio Brave</p>
-            <p>Email: eugeniomatiasbrave@gmail.com o eugenio_m_brave@hotmail.com</p>
+            <p>Email: ${config.mailing.developerEmail} o eugenio_m_brave@hotmail.com</p>
         </div>
         `,
         attachments: [
             {
-                filename: 'CV-3-2025-EugenioBrave.pdf',
-                path: `${__dirname}/public/CV-3-2025-EugenioBrave.pdf`, // Ruta absoluta
+                filename: 'CV_Eugenio_Brave.pdf',
+                path: `${__dirname}/public/CV_Eugenio_Brave.pdf`, // Ruta absoluta
             }
         ]
     };
 
     // Configurar el correo para mi mismo, el desarrollador, con los detalles del contacto, etc.
     const mailToDeveloper = {
-        from: "Porfolio Contact Form",
-        to: ["eugeniomatiasbrave@gmail.com"],
-        subject: "Nuevo contacto desde tu porfolio",
+        from: config.mailing.from, // Usar configuración centralizada
+        to: [config.mailing.developerEmail], // Email centralizado desde config
+        subject: `Nuevo contacto desde tu porfolio - ${email}`, // Incluir email en subject
         html: `
         <div>
             <h4>Nuevo contacto recibido</h4>
@@ -68,10 +69,10 @@ router.post('/', async (req, res) => { // Ruta para manejar el formulario de con
         const developerResult = await mailingService.sendMail(mailToDeveloper);
         console.log("Correo enviado al desarrollador:", developerResult);
 
-        res.status(200).json({ message: "Contact created and emails sent", contact: newContact });
+        res.status(200).json({ menssage: "Contact created and emails sent", contact: newContact });
     } catch (error) {
         console.error("Error al enviar los correos:", error);
-        res.status(500).json({ message: "Error al enviar los correos", error });
+        res.status(500).json({ menssage: "Error al enviar los correos", error });
     }
 });
 
