@@ -7,10 +7,10 @@ export default {
     app: {
         PORT: process.env.PORT || 8080,
         NODE_ENV: process.env.NODE_ENV || 'development' || 'production',
-        FRONTEND_URL: process.env.FRONTEND_URL || 'https://frontporfolio.vercel.app/',
+        FRONTEND_URL: process.env.FRONTEND_URL || 'https://brave-porfolio.vercel.app',
         // URLs permitidas para CORS (separadas por comas)
         ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(',') || [
-            'https://frontporfolio.vercel.app',
+            'https://brave-porfolio.vercel.app',
             'http://localhost:5173', // Desarrollo local SvelteKit
             'http://localhost:8080'  // Desarrollo local alternativo
         ]
