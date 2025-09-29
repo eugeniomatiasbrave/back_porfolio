@@ -4,12 +4,40 @@ import __dirname from '../utils.js';
 import fs from 'fs';
 import path from 'path';
 
-// Configurar SendGrid API Key
-sgMail.setApiKey(config.mailing.sendgridApiKey);
+// Validar y configurar SendGrid API Key
+const validateAndSetApiKey = () => {
+    const apiKey = config.mailing.sendgridApiKey;
+    
+    if (!apiKey) {
+        console.error('❌ No se encontró la API key de SendGrid');
+        console.error('📋 Variables de entorno disponibles para mailing:');
+        console.error('   - SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'SET' : 'NOT SET');
+        console.error('   - PORFOLIO_API_KEY:', process.env.PORFOLIO_API_KEY ? 'SET' : 'NOT SET');
+        return false;
+    }
+    
+    if (!apiKey.startsWith('SG.')) {
+        console.error('❌ API key de SendGrid inválida: debe comenzar con "SG."');
+        console.error('🔑 API key actual:', apiKey.substring(0, 10) + '...');
+        return false;
+    }
+    
+    sgMail.setApiKey(apiKey);
+    console.log('✅ API key de SendGrid configurada correctamente');
+    return true;
+};
+
+// Verificar configuración al importar el módulo
+const isApiKeyValid = validateAndSetApiKey();
 
 // Envía un email de notificación al usuario que completó el formulario
 export const sendContactUserNotification = async ({ to, name, email, message }) => {
 	try {
+		// Verificar que la API key esté configurada correctamente
+		if (!isApiKeyValid) {
+			throw new Error('SendGrid API key no está configurada correctamente');
+		}
+
 		// Construir la ruta al archivo PDF usando el módulo utils
 		const pdfPath = path.join(__dirname, '../public/CV_Eugenio_Brave.pdf');
 		
@@ -28,21 +56,36 @@ export const sendContactUserNotification = async ({ to, name, email, message }) 
 			console.log('🔍 Ruta alternativa:', alternativePdfPath);
 			
 			if (!fs.existsSync(alternativePdfPath)) {
-				throw new Error(`El archivo CV no existe en ninguna de las rutas verificadas`);
+				console.error('❌ El archivo CV no existe en ninguna de las rutas verificadas');
+				console.log('📁 Enviando email sin adjunto...');
+				// Continuar sin adjunto en lugar de fallar completamente
+				finalPdfPath = null;
+			} else {
+				finalPdfPath = alternativePdfPath;
 			}
-			
-			finalPdfPath = alternativePdfPath;
 		} else {
 			finalPdfPath = pdfPath;
 		}
 
-		// Leer el archivo PDF y convertirlo a base64
-		pdfBuffer = fs.readFileSync(finalPdfPath);
-		const pdfBase64 = pdfBuffer.toString('base64');
-		
-		console.log('📎 Preparando email con CV adjunto para:', to);
-		console.log('📄 Tamaño del PDF:', (pdfBuffer.length / 1024 / 1024).toFixed(2), 'MB');
-		console.log('✅ PDF encontrado en:', finalPdfPath);
+		let attachments = [];
+		if (finalPdfPath) {
+			// Leer el archivo PDF y convertirlo a base64
+			pdfBuffer = fs.readFileSync(finalPdfPath);
+			const pdfBase64 = pdfBuffer.toString('base64');
+			
+			console.log('📎 Preparando email con CV adjunto para:', to);
+			console.log('📄 Tamaño del PDF:', (pdfBuffer.length / 1024 / 1024).toFixed(2), 'MB');
+			console.log('✅ PDF encontrado en:', finalPdfPath);
+
+			attachments = [
+				{
+					content: pdfBase64,
+					filename: 'CV_Eugenio_Brave.pdf',
+					type: 'application/pdf',
+					disposition: 'attachment'
+				}
+			];
+		}
 
 		const mailOptions = {
 			to, // Destinatario (el usuario que completó el formulario)
@@ -54,23 +97,25 @@ export const sendContactUserNotification = async ({ to, name, email, message }) 
 				<p>Gracias por ponerte en contacto conmigo. He recibido tu mensaje:</p>
 				<blockquote>${message}</blockquote>
 				<p>Te responderé lo antes posible.</p>
-				<p>Adjunto encontrarás mi CV actualizado en formato PDF para tu revisión.</p>
+				${finalPdfPath ? '<p>Adjunto encontrarás mi CV actualizado en formato PDF para tu revisión.</p>' : '<p>Mi CV estará disponible próximamente.</p>'}
 				<p>Saludos,<br>Eugenio Brave</p>
 			`,
-			attachments: [
-				{
-					content: pdfBase64,
-					filename: 'CV_Eugenio_Brave.pdf',
-					type: 'application/pdf',
-					disposition: 'attachment'
-				}
-			]
+			attachments
 		};
 
 		await sgMail.send(mailOptions);
-		console.log('✅ Email de confirmación con CV enviado al usuario:', to);
+		console.log('✅ Email de confirmación enviado al usuario:', to);
 	} catch (error) {
 		console.error('❌ Error al enviar el email al usuario:', error);
+		
+		// Manejo específico de errores de autorización
+		if (error.code === 401 || (error.response && error.response.status === 401)) {
+			console.error('🔐 Error de autorización - verifica la API key de SendGrid');
+			console.error('📋 Configuración actual:');
+			console.error('   - API Key configurada:', config.mailing.sendgridApiKey ? 'Sí' : 'No');
+			console.error('   - From Email:', config.mailing.fromEmail);
+		}
+		
 		if (error.response) {
 			console.error('Código de estado:', error.response.statusCode);
 			console.error('Cuerpo de la respuesta:', error.response.body);
@@ -83,10 +128,20 @@ export const sendContactUserNotification = async ({ to, name, email, message }) 
 // Envía un email de notificación al administrador/desarrollador
 export const sendContactDevNotification = async ({ name, email, message }) => {
 	try {
+		// Verificar que la API key esté configurada correctamente
+		if (!isApiKeyValid) {
+			throw new Error('SendGrid API key no está configurada correctamente');
+		}
+
 		console.log('=== ENVIANDO EMAIL AL DESARROLLADOR ===');
 		console.log('Email del desarrollador:', config.mailing.devEmail);
 		console.log('Email del remitente:', config.mailing.fromEmail);
 		console.log('Datos del contacto:', { name, email, message });
+
+		if (!config.mailing.devEmail) {
+			console.warn('⚠️ Email del desarrollador no configurado - saltando notificación');
+			return;
+		}
 
 		const mailOptions = {
 			to: config.mailing.devEmail, // Email del desarrollador/administrador
@@ -111,6 +166,16 @@ export const sendContactDevNotification = async ({ name, email, message }) => {
 		
 	} catch (error) {
 		console.error('❌ Error al enviar el email al desarrollador:', error);
+		
+		// Manejo específico de errores de autorización
+		if (error.code === 401 || (error.response && error.response.status === 401)) {
+			console.error('🔐 Error de autorización - verifica la API key de SendGrid');
+			console.error('📋 Configuración actual:');
+			console.error('   - API Key configurada:', config.mailing.sendgridApiKey ? 'Sí' : 'No');
+			console.error('   - From Email:', config.mailing.fromEmail);
+			console.error('   - Dev Email:', config.mailing.devEmail);
+		}
+		
 		if (error.response) {
 			console.error('Código de estado:', error.response.statusCode);
 			console.error('Cuerpo de la respuesta:', error.response.body);

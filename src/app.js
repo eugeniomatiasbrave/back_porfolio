@@ -2,6 +2,8 @@ import express from "express";
 import contactsRouter from "./routes/contactRouters.js";
 import config from './config/config.js';
 import cors from 'cors'; 
+import path from 'path';
+import __dirname from './utils.js';
 
 const app = express();
 
@@ -31,7 +33,11 @@ app.set('trust proxy', 1);
 
 app.use(express.json({ limit: '10mb' })); // Middleware para parsear JSON con límite
 app.use(express.urlencoded({ extended: true })); // Middleware para parsear el cuerpo de las peticiones URL-encoded
-app.use(express.static('public')); // Middleware para servir archivos estáticos desde la carpeta 'public'
+
+// Configurar archivos estáticos con rutas absolutas
+const publicPath = path.join(__dirname, '../public');
+console.log('📁 Configurando archivos estáticos desde:', publicPath);
+app.use(express.static(publicPath)); // Middleware para servir archivos estáticos
 
 // IMPORTANTE: Definir rutas ANTES de app.listen()
 app.use('/api/contacts', contactsRouter);

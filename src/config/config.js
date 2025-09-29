@@ -16,7 +16,7 @@ export default {
         ]
     },
     mailing: {
-        sendgridApiKey: process.env.PORFOLIO_API_KEY || 'PORFOLIO_API_KEY',
+        sendgridApiKey: process.env.SENDGRID_API_KEY || process.env.PORFOLIO_API_KEY || '',
         fromEmail: process.env.FROM_EMAIL || 'eugenio_m_brave@hotmail.com',
         devEmail: process.env.DEV_EMAIL || '',
 
