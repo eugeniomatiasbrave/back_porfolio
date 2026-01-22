@@ -39,7 +39,7 @@ export const sendContactUserNotification = async ({ to, name, email, message }) 
 		}
 
 		// Construir la ruta al archivo PDF usando el módulo utils
-		const pdfPath = path.join(__dirname, '../public/CV_Eugenio_Brave.pdf');
+		const pdfPath = path.join(__dirname, '../public/CV_Eugenio_Brave_accRef.pdf');
 		
 		console.log('🔍 Buscando PDF en:', pdfPath);
 		
@@ -52,7 +52,7 @@ export const sendContactUserNotification = async ({ to, name, email, message }) 
 			console.log('📂 Intentando con ruta alternativa...');
 			
 			// Intentar con ruta alternativa (directamente en public/)
-			const alternativePdfPath = path.join(process.cwd(), 'src/public/CV_Eugenio_Brave.pdf');
+			const alternativePdfPath = path.join(process.cwd(), 'src/public/CV_Eugenio_Brave_accRef.pdf');
 			console.log('🔍 Ruta alternativa:', alternativePdfPath);
 			
 			if (!fs.existsSync(alternativePdfPath)) {
@@ -80,7 +80,7 @@ export const sendContactUserNotification = async ({ to, name, email, message }) 
 			attachments = [
 				{
 					content: pdfBase64,
-					filename: 'CV_Eugenio_Brave.pdf',
+					filename: 'CV_Eugenio_Brave_accRef.pdf',
 					type: 'application/pdf',
 					disposition: 'attachment'
 				}
